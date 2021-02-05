@@ -16,11 +16,12 @@ app.use(bodyParser.json());
 app.listen(port, () => console.log(`Example app listening on port ${port}!`))
 
 app.get('/', (req, res) => {
-    console.log(req.query);
     const temperature = req.query.temperature;
     const humidity = req.query.humidity;
-    const d = Date.now();
-    console.log(d,',',temperature,',',humidity);
+    const d = new Date(Date.now());
+    const newRow = d.toISOString() + ',' + temperature + ',' +humidity+"\n";
+    console.log(d.toISOString() + ',' + temperature + ',' +humidity);
+    fs.appendFileSync('/home/pi/data/battery.txt', newRow);
     res.send('ciao');
 })
 
