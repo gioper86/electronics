@@ -14,6 +14,8 @@ uint8_t frontPin1 = D5;
 uint8_t frontPin2 = D6;
 uint8_t frontEnable = D8;
 
+int rearMotorSpeed = 700;
+
 WiFiClient espClient;
 PubSubClient client(espClient);
 
@@ -40,8 +42,6 @@ void loop() {
   }
   client.loop();  
 }
-
-
 
 void mqttReconnect() {
   // Loop until we're reconnected
@@ -71,14 +71,14 @@ void forward() {
   Serial.println("Forward");  
   digitalWrite(frontPin1, LOW);
   digitalWrite(frontPin2, HIGH);
-  analogWrite(frontEnable, 700); //max 1023
+  analogWrite(frontEnable, rearMotorSpeed); //max 1023
 }
 
 void backward() {
   Serial.println("Backward");
   digitalWrite(frontPin1, HIGH);
   digitalWrite(frontPin2, LOW);
-  analogWrite(frontEnable, 700);
+  analogWrite(frontEnable, rearMotorSpeed);
 }
 
 void stopCar() {
@@ -105,6 +105,14 @@ void right() {
   digitalWrite(rearEnable, HIGH);  
 }
 
+void increaseSpeed() {
+  rearMotorSpeed += 50;
+}
+
+void decreaseSpeed() {
+  rearMotorSpeed -= 50;
+}
+
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
   Serial.print(topic);
 
@@ -127,7 +135,11 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     right();
   } else if(messageTemp == "straight") {
     straight();
-  }    
+  } else if(messageTemp == "increaseSpeed") {
+    increaseSpeed();
+  } else if(messageTemp == "decreaseSpeed") {
+    decreaseSpeed();
+  }   
 }
 
 void setupWifi() {

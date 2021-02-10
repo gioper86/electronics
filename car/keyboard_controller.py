@@ -1,6 +1,6 @@
 from pynput import keyboard
 import paho.mqtt.client as mqtt #import the client1
-broker_address="" 
+broker_address="192.168.1.95"
 
 client = mqtt.Client("macGio")
 client.connect(broker_address)
@@ -9,14 +9,17 @@ keys = {
     "w": False,
     "s": False,
     "d": False,
-    "a": False
+    "a": False,
+    "u": False,
+    "j": False
 }
 
 def on_press(key):
     try:
         if key.char in keys and not keys[key.char]:
             keys[key.char] = True
-            publish_message(key.char, "pressed")
+            if key.char not in ["u", "j"]:
+                publish_message(key.char, "pressed")
     except AttributeError:
         print('special key {0} pressed'.format(
             key))
@@ -39,7 +42,9 @@ def publish_message(key, action):
         ("d", "pressed"): "right",
         ("d", "released"): "straight",
         ("a", "pressed"): "left",
-        ("a", "released"): "straight"          
+        ("a", "released"): "straight",
+        ("u", "released"): "increaseSpeed",
+        ("j", "released"): "decreaseSpeed"
     }
 
     if (key, action) in actions:
