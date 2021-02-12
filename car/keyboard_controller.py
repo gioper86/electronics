@@ -21,17 +21,19 @@ def on_press(key):
             if key.char not in ["u", "j"]:
                 publish_message(key.char, "pressed")
     except AttributeError:
-        print('special key {0} pressed'.format(
-            key))
+        print('special key {0} pressed'.format(key))
 
 def on_release(key):
-    print('{0} released'.format(key))
-    if key.char in keys:
-        keys[key.char] = False
-        publish_message(key.char, "released")
-    if key == keyboard.Key.esc:
-        # Stop listener
-        return False
+    try:
+        print('{0} released'.format(key))
+        if key.char in keys:
+            keys[key.char] = False
+            publish_message(key.char, "released")
+        if key == keyboard.Key.esc:
+            # Stop listener
+            return False
+    except AttributeError:
+        print('special key {0} pressed'.format(key))            
 
 def publish_message(key, action):
     actions = {
