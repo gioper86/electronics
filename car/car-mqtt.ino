@@ -1,6 +1,10 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <PubSubClient.h>
+#include <Servo.h>
+
+Servo servo;
+Servo servo2;
 
 const char* ssid = "";
 const char* password = "";
@@ -16,6 +20,11 @@ uint8_t frontEnable = D8;
 
 int rearMotorSpeed = 700;
 
+//servos' state
+int leftRightAngle = 90;
+int bottomTopAngle = 90;
+int STEP = 15;
+
 WiFiClient espClient;
 PubSubClient client(espClient);
 
@@ -27,12 +36,18 @@ void setup() {
   pinMode(rearEnable, OUTPUT);
   pinMode(frontPin1, OUTPUT);
   pinMode(frontPin2, OUTPUT);
-  pinMode(frontEnable, OUTPUT);
+  pinMode(frontEnable, OUTPUT);  
 
   setupWifi();
 
   client.setServer(mqttServer, 1883);
   client.setCallback(mqttCallback); 
+
+  servo.attach(2); //D4
+  servo.write(leftRightAngle);
+
+  servo2.attach(13); //D7
+  servo2.write(bottomTopAngle);   
 }
 
 void loop() {
@@ -105,11 +120,40 @@ void right() {
   digitalWrite(rearEnable, HIGH);  
 }
 
+
+void servoRight() {
+  leftRightAngle = max(leftRightAngle - STEP, 0);
+  servo.write(leftRightAngle);
+}
+
+void servoLeft() {
+  leftRightAngle = min(leftRightAngle + STEP, 180);
+  servo.write(leftRightAngle);
+}
+
+void servoTop() {
+  bottomTopAngle = min(bottomTopAngle + STEP, 180);
+  servo2.write(bottomTopAngle);
+}
+
+void servoBottom() {
+  bottomTopAngle = max(bottomTopAngle - STEP, 0);
+  servo2.write(bottomTopAngle);
+}
+
 void increaseSpeed() {
+  if(rearMotorSpeed + 50 >= 1023) {
+    rearMotorSpeed=1023;
+    return;
+  }
   rearMotorSpeed += 50;
 }
 
 void decreaseSpeed() {
+  if(rearMotorSpeed - 50 <= 0) {
+    rearMotorSpeed=0;
+    return;
+  }  
   rearMotorSpeed -= 50;
 }
 
@@ -139,7 +183,19 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     increaseSpeed();
   } else if(messageTemp == "decreaseSpeed") {
     decreaseSpeed();
-  }   
+  } else if(messageTemp == "servoRight") {
+    servoRight();
+  } else if(messageTemp == "servoLeft") {
+    servoLeft();
+  } else if(messageTemp == "servoTop") {
+    servoTop();
+  } else if(messageTemp == "servoBottom") {
+    servoBottom();
+  }
+
+  Serial.println((String)"leftRightAngle: " + leftRightAngle);
+  Serial.println((String)"bottomTopAngle: " + bottomTopAngle);
+  
 }
 
 void setupWifi() {

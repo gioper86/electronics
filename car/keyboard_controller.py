@@ -11,14 +11,18 @@ keys = {
     "d": False,
     "a": False,
     "u": False,
-    "j": False
+    "j": False,
+    "h": False,
+    "b": False,
+    "n": False,
+    "m": False
 }
 
 def on_press(key):
     try:
         if key.char in keys and not keys[key.char]:
             keys[key.char] = True
-            if key.char not in ["u", "j"]:
+            if key.char in ["w", "s","d","a"]:
                 publish_message(key.char, "pressed")
     except AttributeError:
         print('special key {0} pressed'.format(key))
@@ -46,7 +50,11 @@ def publish_message(key, action):
         ("a", "pressed"): "left",
         ("a", "released"): "straight",
         ("u", "released"): "increaseSpeed",
-        ("j", "released"): "decreaseSpeed"
+        ("j", "released"): "decreaseSpeed",
+        ("h", "released"): "servoTop",
+        ("n", "released"): "servoBottom",
+        ("b", "released"): "servoLeft",
+        ("m", "released"): "servoRight"
     }
 
     if (key, action) in actions:
