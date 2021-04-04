@@ -1,0 +1,11 @@
+[Unit]
+Description=Service to receivces reading from temp and humidity sensor
+After=multi-user.target
+[Service]
+WorkingDirectory=/home/pi/scripts/electronics/mobile-weather
+User=pi
+Type=idle
+ExecStart=/home/pi/.conda/envs/electronics/bin/python /home/pi/scripts/electronics/mobile-weather/weather_subscriber.py &> /dev/null
+Restart=always
+[Install]
+WantedBy=multi-user.target
