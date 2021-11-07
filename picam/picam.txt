@@ -1,0 +1,13 @@
+
+on the PI
+
+sudo apt-get install gstreamer1.0-tools
+
+raspivid -t 999999 -w 1080 -h 720 -fps 25 -hf -b 2000000 -o - | gst-launch-1.0 -v fdsrc ! h264parse ! rtph264pay config-interval=1 pt=96 ! gdppay ! tcpserversink host=192.168.1.95 port=5000
+
+
+on MAC
+
+brew install gstreamer gst-libav gst-plugins-ugly gst-plugins-base gst-plugins-bad gst-plugins-good
+
+gst-launch-1.0 -v tcpclientsrc host=192.168.1.95 port=5000 ! gdpdepay ! rtph264depay ! avdec_h264 ! videoconvert ! autovideosink sync=false
