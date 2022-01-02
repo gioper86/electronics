@@ -1,7 +1,6 @@
 #include <WiFiNINA.h>
 #include <ArduinoHttpClient.h>
 #include <ArduinoJson.h>
-
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
@@ -13,6 +12,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 char ssid[] = "";
 char pass[] = "";
 int keyIndex = 0;
+bool pollOrders = true;
 
 int status = WL_IDLE_STATUS;
 
@@ -26,20 +26,34 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
 
-  while (!Serial) {}
-  connectToWiFi();
-
   if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3D for 128x64
     Serial.println(F("SSD1306 allocation failed"));
     for(;;);
   }
-  delay(1000);
+  delay(500);
+  
   display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+  display.setCursor(1, 10);
+  display.println("Connecting...");
+  display.display();  
 
-  String orderJson = getOrderStatus();
-  Serial.println(orderJson);
-  struct StatusPage deliveryStatus = getStatusObj(orderJson);
+  while (!Serial) {}
+  connectToWiFi();
+}
 
+void loop() {
+  if(pollOrders) {
+    String orderJson = getOrderStatus();
+    Serial.println(orderJson);
+    struct StatusPage deliveryStatus = getStatusObj(orderJson);
+    displayOrderStatus(deliveryStatus);   
+  }
+  delay(30000);
+}
+
+void displayOrderStatus(StatusPage deliveryStatus) {
   display.clearDisplay(); 
   display.setTextSize(1);
   display.setTextColor(WHITE);
@@ -48,10 +62,7 @@ void setup() {
   display.println("ETA: " + deliveryStatus.eta);
   display.println("");  
   display.println("Status: " + deliveryStatus.orderStatus);
-  display.display();
-
- // display.setCursor(1,30);
- // display.println(doc["statusData"]["subtitle"]);  
+  display.display(); 
 }
 
 StatusPage getStatusObj(String json) {
@@ -61,13 +72,9 @@ StatusPage getStatusObj(String json) {
   if (error) {
     Serial.print(F("deserializeJson() failed: "));
     Serial.println(error.f_str());
-    return {"aa", "aa", "33"};
+    return {"", "", "Error"};
   }
   return { doc["eta"], doc["message"], doc["orderStatus"] };
-}
-
-void loop() {
-
 }
 
 void connectToWiFi() {
