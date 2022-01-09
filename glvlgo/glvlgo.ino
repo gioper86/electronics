@@ -23,8 +23,44 @@ struct StatusPage {
  String orderStatus;
 };
 
+class LcdAnimation {
+  int xPosition;
+  int screenWidth;
+  int imageWidth;
+  unsigned long millisMarker;
+  
+  public:
+  LcdAnimation(int sw, int imageWidth) {
+    xPosition = -imageWidth;
+    screenWidth = sw;
+    millisMarker = 0;
+  }
+
+  bool animate() {
+    if (!isFinished() && (millis() - millisMarker) > 100) {
+      xPosition = xPosition + 2;
+      millisMarker = millis();
+      // refreshDisplay(deliveryStatus, bmp);
+      return true;
+    }
+    return false;
+  }
+
+  int getXPosition() {
+    return xPosition;
+  }
+
+  bool isFinished() {
+    if(xPosition >= screenWidth) {
+      xPosition = -imageWidth;
+      return true;
+    }
+    return false;
+  }
+};
+
 // 'pizza', 35x34px
-const unsigned char epd_bitmap_pizza [] PROGMEM = {
+unsigned char epd_bitmap_pizza [] PROGMEM = {
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7f, 0x00, 0x00, 0x00, 0x00, 0x7f, 0xc0, 0x00, 0x00, 0x00, 
   0x63, 0xe0, 0x00, 0x00, 0x00, 0x60, 0xf0, 0x00, 0x00, 0x00, 0x70, 0x3c, 0x00, 0x00, 0x00, 0x7e, 
   0x1e, 0x00, 0x00, 0x00, 0x7f, 0x0f, 0x00, 0x00, 0x00, 0x7f, 0xc3, 0x80, 0x00, 0x00, 0x63, 0xe1, 
@@ -39,6 +75,7 @@ const unsigned char epd_bitmap_pizza [] PROGMEM = {
 };
 
 struct StatusPage deliveryStatus;
+LcdAnimation lcdAnimation(SCREEN_WIDTH, 35);
 
 // Array of all bitmaps for convenience. (Total bytes used to store images in PROGMEM = 560)
 void setup() {
@@ -70,11 +107,10 @@ void loop() {
     deliveryStatus = {"14 minuti", "", "Delivering"}; //getStatusObj(orderJson);
   }
 
-  int xPosition = -35;
-  while (xPosition < SCREEN_WIDTH) {
-    xPosition = xPosition + 2;
-    displayOrderStatus(deliveryStatus, xPosition);
-    delay(50);
+  while(!lcdAnimation.isFinished()) {
+    if(lcdAnimation.animate()) {
+      displayOrderStatus(deliveryStatus, lcdAnimation.getXPosition());
+    }
   }
 
   delay(1000);
