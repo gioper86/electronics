@@ -3,6 +3,7 @@
 #include <ArduinoJson.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <Servo.h>
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
@@ -52,10 +53,78 @@ class LcdAnimation {
 
   bool isFinished() {
     if(xPosition >= screenWidth) {
-      xPosition = -imageWidth;
       return true;
     }
     return false;
+  }
+
+  void reset() {
+    xPosition = -imageWidth;
+  }
+};
+
+class LegoMan {
+
+  Servo servo;
+  int servoPin;
+  int angleStart;
+  int angleFinish;
+  int angleCurrent;
+  unsigned long millisMarker;
+  unsigned long pauseMillis;
+  int maxRepetitions;
+  int currentRepetitions;
+  bool isPaused;
+  
+  public:
+  LegoMan(int srvPin, int aStart, int aFinish) {
+    angleStart = aStart;
+    angleCurrent = aStart;
+    angleFinish = aFinish;
+    servo.attach(srvPin);
+    servo.write(aStart);
+    millisMarker = 0;
+    maxRepetitions = 6;
+    currentRepetitions = 0;
+    pauseMillis = 0;
+  }
+
+  void animate() {
+    if(isFinished()) {
+      return;
+    }
+    
+    if((millis() - pauseMillis > 800)) {
+      isPaused = false;
+    } else {
+      return;
+    }
+    
+    if ((millis() - millisMarker) > 20) {
+      millisMarker = millis();
+      servo.write(angleCurrent);
+      angleCurrent += 2;
+    }
+    
+    if(angleCurrent >= angleFinish) {
+      angleCurrent = angleStart;
+      isPaused = true;
+      pauseMillis = millis();
+      currentRepetitions++;
+      Serial.println(currentRepetitions);
+    }
+    
+  }
+
+  bool isFinished() {
+    if(currentRepetitions >= maxRepetitions) {
+      return true;
+    }
+    return false;
+  }
+
+  void reset() {
+    currentRepetitions = 0;
   }
 };
 
@@ -76,6 +145,7 @@ unsigned char epd_bitmap_pizza [] PROGMEM = {
 
 struct StatusPage deliveryStatus;
 LcdAnimation lcdAnimation(SCREEN_WIDTH, 35);
+LegoMan legoMan(3, 150, 180);
 
 // Array of all bitmaps for convenience. (Total bytes used to store images in PROGMEM = 560)
 void setup() {
@@ -107,13 +177,16 @@ void loop() {
     deliveryStatus = {"14 minuti", "", "Delivering"}; //getStatusObj(orderJson);
   }
 
-  while(!lcdAnimation.isFinished()) {
+  while(!lcdAnimation.isFinished() || !legoMan.isFinished()) {
     if(lcdAnimation.animate()) {
       displayOrderStatus(deliveryStatus, lcdAnimation.getXPosition());
     }
+    legoMan.animate();
   }
-
+    
   delay(1000);
+  legoMan.reset();
+  lcdAnimation.reset();
 }
 
 void displayOrderStatus(StatusPage deliveryStatus, int xPosition) {
