@@ -4,6 +4,8 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <Servo.h>
+#include "LcdAnimation.cpp"
+#include "LegoMan.cpp"
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
@@ -17,116 +19,6 @@ bool pollOrders = true;
 
 int status = WL_IDLE_STATUS;
 int xPosition = 0;
-
-struct StatusPage {
- String eta;
- String message;
- String orderStatus;
-};
-
-class LcdAnimation {
-  int xPosition;
-  int screenWidth;
-  int imageWidth;
-  unsigned long millisMarker;
-  
-  public:
-  LcdAnimation(int sw, int imageWidth) {
-    xPosition = -imageWidth;
-    screenWidth = sw;
-    millisMarker = 0;
-  }
-
-  bool animate() {
-    if (!isFinished() && (millis() - millisMarker) > 100) {
-      xPosition = xPosition + 2;
-      millisMarker = millis();
-      // refreshDisplay(deliveryStatus, bmp);
-      return true;
-    }
-    return false;
-  }
-
-  int getXPosition() {
-    return xPosition;
-  }
-
-  bool isFinished() {
-    if(xPosition >= screenWidth) {
-      return true;
-    }
-    return false;
-  }
-
-  void reset() {
-    xPosition = -imageWidth;
-  }
-};
-
-class LegoMan {
-
-  Servo servo;
-  int servoPin;
-  int angleStart;
-  int angleFinish;
-  int angleCurrent;
-  unsigned long millisMarker;
-  unsigned long pauseMillis;
-  int maxRepetitions;
-  int currentRepetitions;
-  bool isPaused;
-  
-  public:
-  LegoMan(int srvPin, int aStart, int aFinish) {
-    angleStart = aStart;
-    angleCurrent = aStart;
-    angleFinish = aFinish;
-    servo.attach(srvPin);
-    servo.write(aStart);
-    millisMarker = 0;
-    maxRepetitions = 6;
-    currentRepetitions = 0;
-    pauseMillis = 0;
-  }
-
-  void animate() {
-    if(isFinished()) {
-      return;
-    }
-    
-    if((millis() - pauseMillis > 800)) {
-      isPaused = false;
-    } else {
-      return;
-    }
-    
-    if ((millis() - millisMarker) > 20) {
-      millisMarker = millis();
-      servo.write(angleCurrent);
-      angleCurrent += 2;
-    }
-    
-    if(angleCurrent >= angleFinish) {
-      angleCurrent = angleStart;
-      isPaused = true;
-      pauseMillis = millis();
-      currentRepetitions++;
-      Serial.println(currentRepetitions);
-    }
-    
-  }
-
-  bool isFinished() {
-    if(currentRepetitions >= maxRepetitions) {
-      return true;
-    }
-    return false;
-  }
-
-  void reset() {
-    currentRepetitions = 0;
-  }
-};
 
 // 'pizza', 35x34px
 unsigned char epd_bitmap_pizza [] PROGMEM = {
@@ -143,7 +35,7 @@ unsigned char epd_bitmap_pizza [] PROGMEM = {
   0x7f, 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-struct StatusPage deliveryStatus;
+// struct StatusPage deliveryStatus;
 LcdAnimation lcdAnimation(SCREEN_WIDTH, 35);
 LegoMan legoMan(3, 150, 180);
 
@@ -171,14 +63,18 @@ void setup() {
 
 
 void loop() {
+  DeliveryStatus deliveryStatus;
   if(pollOrders) {
     //String orderJson = getOrderStatus();
     //Serial.println(orderJson);
     deliveryStatus = {"14 minuti", "", "Delivering"}; //getStatusObj(orderJson);
   }
 
+  legoMan.setDeliveryStatus(deliveryStatus);
+
   while(!lcdAnimation.isFinished() || !legoMan.isFinished()) {
     if(lcdAnimation.animate()) {
+      // TODO try to move to LcdAnimation class
       displayOrderStatus(deliveryStatus, lcdAnimation.getXPosition());
     }
     legoMan.animate();
@@ -189,7 +85,7 @@ void loop() {
   lcdAnimation.reset();
 }
 
-void displayOrderStatus(StatusPage deliveryStatus, int xPosition) {
+void displayOrderStatus(DeliveryStatus deliveryStatus, int xPosition) {
   display.clearDisplay(); 
   display.setTextSize(1);
   display.setTextColor(WHITE);
@@ -204,7 +100,7 @@ void displayOrderStatus(StatusPage deliveryStatus, int xPosition) {
   display.display(); 
 }
 
-StatusPage getStatusObj(String json) {
+DeliveryStatus getStatusObj(String json) {
   StaticJsonDocument<1024> doc;
   DeserializationError error = deserializeJson(doc, json);
 
