@@ -1,6 +1,8 @@
+#ifndef LCDDISPLAY_G
+#define LCDDISPLAY_G
+
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include "LcdDisplay.h"
 #include "DeliveryStatus.cpp"
 
 #define SCREEN_WIDTH 128
@@ -48,7 +50,6 @@ class LcdDisplay {
       display.setTextSize(1);
       display.setTextColor(WHITE);
       display.setCursor(1, 1);
-      //display.println(title);
       display.println("ETA: " + deliveryStatus.eta);
       display.println("");  
       display.println("Status: " + deliveryStatus.orderStatus);
@@ -58,3 +59,5 @@ class LcdDisplay {
       display.display(); 
     }    
 };
+
+#endif

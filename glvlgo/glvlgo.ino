@@ -19,7 +19,6 @@ bool pollOrders = true;
 int status = WL_IDLE_STATUS;
 int xPosition = 0;
 
-
 LcdDisplay lcdDisplay;
 LcdAnimation lcdAnimation(SCREEN_WIDTH, 35);
 LegoMan legoMan(3, 150, 180);
@@ -46,8 +45,8 @@ void loop() {
   legoMan.setDeliveryStatus(deliveryStatus);
 
   while(!lcdAnimation.isFinished() || !legoMan.isFinished()) {
+    // This is bad, but if I pass lcdDisplay do lcdAnimation everything freezes ¯\_(ツ)_/¯
     if(lcdAnimation.animate()) {
-      // TODO try to move to LcdAnimation class
       lcdDisplay.displayOrderStatus(deliveryStatus, lcdAnimation.getXPosition());
     }
     legoMan.animate();

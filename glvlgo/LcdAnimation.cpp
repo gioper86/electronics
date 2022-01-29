@@ -18,7 +18,6 @@ class LcdAnimation {
     if (!isFinished() && (millis() - millisMarker) > 100) {
       xPosition = xPosition + 2;
       millisMarker = millis();
-      // refreshDisplay(deliveryStatus, bmp);
       return true;
     }
     return false;
