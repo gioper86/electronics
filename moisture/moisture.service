@@ -1,0 +1,11 @@
+[Unit]
+Description=Service to receive readings from moisture sensor
+After=multi-user.target
+[Service]
+WorkingDirectory=/home/pi/scripts/electronics/moisture
+User=pi
+Type=idle
+ExecStart=/home/pi/.conda/envs/electronics/bin/python /home/pi/scripts/electronics/moisture/moisture_subscriber.py &> /dev/null
+Restart=always
+[Install]
+WantedBy=multi-user.target

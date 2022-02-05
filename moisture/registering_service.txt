@@ -1,0 +1,3 @@
+sudo cp moisture.service /lib/systemd/system
+sudo systemctl start moisture.service
+sudo systemctl enable moisture.service
