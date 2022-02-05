@@ -2,39 +2,44 @@
 #include <WiFiClient.h>
 #include <PubSubClient.h>
 
-
 const char* ssid = "";
 const char* password = "";
 const char* mqttServer = "";
 
 const int analogInPin = A0;
+const int powerPin = D2;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
 
 void setup() {
+  pinMode(powerPin, OUTPUT);
+  
   Serial.begin(9600);
-
-//  setupWifi();
-//  client.setServer(mqttServer, 1883);
-//  mqttReconnect();
+  //TODO: go to sleep if it can't connect to WiFi or MQTT broker
+  WiFi.mode(WIFI_STA);
+  setupWifi();
+  client.setServer(mqttServer, 1883);
+  mqttReconnect();
  
   while(!Serial) { }
 
   //getReadings();
-
-//  client.disconnect();
-//  Serial.println("Going to deep sleep for 600 seconds");
-//  ESP.deepSleep(600e6);
 }
 
-void loop() { 
+void loop() {
+  digitalWrite(powerPin, HIGH);
   for(int i=0;i<10;i++) {
     int moistureReading = analogRead(analogInPin);
     Serial.println(moistureReading);
-    delay(300);
+    String message = (String)moistureReading;
+    client.publish("moisture", message.c_str());    
+    delay(500);
   }
-  delay(5000);
+  digitalWrite(powerPin, LOW);
+  client.disconnect();
+  Serial.println("Going to deep sleep for 600 seconds");
+  ESP.deepSleep(600e6);  
 }
 
 float* getReadings() {}
